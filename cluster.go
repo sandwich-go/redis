@@ -80,6 +80,8 @@ type ClusterOptions struct {
 	IdleCheckFrequency time.Duration
 
 	TLSConfig *tls.Config
+
+	OnSleep func(cmd string, attempt int, dur time.Duration)
 }
 
 func (opt *ClusterOptions) init() {
@@ -137,6 +139,7 @@ func (opt *ClusterOptions) clientOptions() *Options {
 	return &Options{
 		Dialer:    opt.Dialer,
 		OnConnect: opt.OnConnect,
+		OnSleep:   opt.OnSleep,
 
 		Username: opt.Username,
 		Password: opt.Password,
@@ -777,7 +780,7 @@ func (c *ClusterClient) process(ctx context.Context, cmd Cmder) error {
 	var lastErr error
 	for attempt := 0; attempt <= c.opt.MaxRedirects; attempt++ {
 		if attempt > 0 {
-			if err := internal.Sleep(ctx, c.retryBackoff(attempt)); err != nil {
+			if err := c.sleep(ctx, cmd.Name(), attempt); err != nil {
 				return err
 			}
 		}
@@ -1101,7 +1104,7 @@ func (c *ClusterClient) _processPipeline(ctx context.Context, cmds []Cmder) erro
 
 	for attempt := 0; attempt <= c.opt.MaxRedirects; attempt++ {
 		if attempt > 0 {
-			if err := internal.Sleep(ctx, c.retryBackoff(attempt)); err != nil {
+			if err := c.sleep(ctx, "Pipeline", attempt); err != nil {
 				setCmdsErr(cmds, err)
 				return err
 			}
@@ -1294,7 +1297,7 @@ func (c *ClusterClient) _processTxPipeline(ctx context.Context, cmds []Cmder) er
 		cmdsMap := map[*clusterNode][]Cmder{node: cmds}
 		for attempt := 0; attempt <= c.opt.MaxRedirects; attempt++ {
 			if attempt > 0 {
-				if err := internal.Sleep(ctx, c.retryBackoff(attempt)); err != nil {
+				if err := c.sleep(ctx, "TxPipeline", attempt); err != nil {
 					setCmdsErr(cmds, err)
 					return err
 				}
@@ -1465,7 +1468,7 @@ func (c *ClusterClient) Watch(ctx context.Context, fn func(*Tx) error, keys ...s
 
 	for attempt := 0; attempt <= c.opt.MaxRedirects; attempt++ {
 		if attempt > 0 {
-			if err := internal.Sleep(ctx, c.retryBackoff(attempt)); err != nil {
+			if err := c.sleep(ctx, "Watch", attempt); err != nil {
 				return err
 			}
 		}
@@ -1564,6 +1567,14 @@ func (c *ClusterClient) PSubscribe(ctx context.Context, channels ...string) *Pub
 		_ = pubsub.PSubscribe(ctx, channels...)
 	}
 	return pubsub
+}
+
+func (c *ClusterClient) sleep(ctx context.Context, name string, attempt int) error {
+	d := c.retryBackoff(attempt)
+	if c.opt.OnSleep != nil {
+		c.opt.OnSleep(name, attempt, d)
+	}
+	return internal.Sleep(ctx, d)
 }
 
 func (c *ClusterClient) retryBackoff(attempt int) time.Duration {

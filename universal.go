@@ -58,6 +58,7 @@ type UniversalOptions struct {
 	// Only failover clients.
 
 	MasterName string
+	OnSleep    func(cmd string, attempt int, dur time.Duration)
 }
 
 // Cluster returns cluster options created from the universal options.
@@ -95,6 +96,7 @@ func (o *UniversalOptions) Cluster() *ClusterOptions {
 		IdleCheckFrequency: o.IdleCheckFrequency,
 
 		TLSConfig: o.TLSConfig,
+		OnSleep:   o.OnSleep,
 	}
 }
 
@@ -169,6 +171,7 @@ func (o *UniversalOptions) Simple() *Options {
 		IdleCheckFrequency: o.IdleCheckFrequency,
 
 		TLSConfig: o.TLSConfig,
+		OnSleep:   o.OnSleep,
 	}
 }
 

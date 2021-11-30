@@ -111,6 +111,8 @@ type Options struct {
 
 	// Limiter interface used to implemented circuit breaker or rate limiter.
 	Limiter Limiter
+
+	OnSleep func(cmd string, attempt int, dur time.Duration)
 }
 
 func (opt *Options) init() {

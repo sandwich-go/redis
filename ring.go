@@ -90,6 +90,7 @@ type RingOptions struct {
 
 	TLSConfig *tls.Config
 	Limiter   Limiter
+	OnSleep   func(cmd string, attempt int, dur time.Duration)
 }
 
 func (opt *RingOptions) init() {
@@ -462,6 +463,14 @@ func (c *Ring) Options() *RingOptions {
 	return c.opt
 }
 
+func (c *Ring) sleep(ctx context.Context, cmd Cmder, attempt int) error {
+	d := c.retryBackoff(attempt)
+	if c.opt.OnSleep != nil {
+		c.opt.OnSleep(cmd.Name(), attempt, d)
+	}
+	return internal.Sleep(ctx, d)
+}
+
 func (c *Ring) retryBackoff(attempt int) time.Duration {
 	return internal.RetryBackoff(attempt, c.opt.MinRetryBackoff, c.opt.MaxRetryBackoff)
 }
@@ -594,7 +603,7 @@ func (c *Ring) process(ctx context.Context, cmd Cmder) error {
 	var lastErr error
 	for attempt := 0; attempt <= c.opt.MaxRetries; attempt++ {
 		if attempt > 0 {
-			if err := internal.Sleep(ctx, c.retryBackoff(attempt)); err != nil {
+			if err := c.sleep(ctx, cmd, attempt); err != nil {
 				return err
 			}
 		}

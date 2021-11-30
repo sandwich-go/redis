@@ -332,7 +332,7 @@ func (c *baseClient) process(ctx context.Context, cmd Cmder) error {
 
 func (c *baseClient) _process(ctx context.Context, cmd Cmder, attempt int) (bool, error) {
 	if attempt > 0 {
-		if err := internal.Sleep(ctx, c.retryBackoff(attempt)); err != nil {
+		if err := c.sleep(ctx, cmd.Name(), attempt); err != nil {
 			return false, err
 		}
 	}
@@ -362,6 +362,14 @@ func (c *baseClient) _process(ctx context.Context, cmd Cmder, attempt int) (bool
 
 	retry := shouldRetry(err, atomic.LoadUint32(&retryTimeout) == 1)
 	return retry, err
+}
+
+func (c *baseClient) sleep(ctx context.Context, name string, attempt int) error {
+	d := c.retryBackoff(attempt)
+	if c.opt.OnSleep != nil {
+		c.opt.OnSleep(name, attempt, d)
+	}
+	return internal.Sleep(ctx, d)
 }
 
 func (c *baseClient) retryBackoff(attempt int) time.Duration {
@@ -427,7 +435,7 @@ func (c *baseClient) _generalProcessPipeline(
 	var lastErr error
 	for attempt := 0; attempt <= c.opt.MaxRetries; attempt++ {
 		if attempt > 0 {
-			if err := internal.Sleep(ctx, c.retryBackoff(attempt)); err != nil {
+			if err := c.sleep(ctx, "Pipeline", attempt); err != nil {
 				return err
 			}
 		}

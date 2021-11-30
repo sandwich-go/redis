@@ -58,7 +58,7 @@ type UniversalOptions struct {
 	// Only failover clients.
 
 	MasterName string
-	OnSleep    func(cmd string, attempt int, dur time.Duration)
+	OnSleep    func(cmd string, attempt int, dur time.Duration, err error)
 }
 
 // Cluster returns cluster options created from the universal options.

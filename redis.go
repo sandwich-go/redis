@@ -320,7 +320,7 @@ func (c *baseClient) process(ctx context.Context, cmd Cmder) error {
 	for attempt := 0; attempt <= c.opt.MaxRetries; attempt++ {
 		attempt := attempt
 
-		retry, err := c._process(ctx, cmd, attempt)
+		retry, err := c._process(ctx, cmd, attempt, lastErr)
 		if err == nil || !retry {
 			return err
 		}
@@ -330,9 +330,9 @@ func (c *baseClient) process(ctx context.Context, cmd Cmder) error {
 	return lastErr
 }
 
-func (c *baseClient) _process(ctx context.Context, cmd Cmder, attempt int) (bool, error) {
+func (c *baseClient) _process(ctx context.Context, cmd Cmder, attempt int, lastErr error) (bool, error) {
 	if attempt > 0 {
-		if err := c.sleep(ctx, cmd.Name(), attempt); err != nil {
+		if err := c.sleep(ctx, cmd.Name(), attempt, lastErr); err != nil {
 			return false, err
 		}
 	}
@@ -364,10 +364,10 @@ func (c *baseClient) _process(ctx context.Context, cmd Cmder, attempt int) (bool
 	return retry, err
 }
 
-func (c *baseClient) sleep(ctx context.Context, name string, attempt int) error {
+func (c *baseClient) sleep(ctx context.Context, name string, attempt int, err error) error {
 	d := c.retryBackoff(attempt)
 	if c.opt.OnSleep != nil {
-		c.opt.OnSleep(name, attempt, d)
+		c.opt.OnSleep(name, attempt, d, err)
 	}
 	return internal.Sleep(ctx, d)
 }
@@ -435,7 +435,7 @@ func (c *baseClient) _generalProcessPipeline(
 	var lastErr error
 	for attempt := 0; attempt <= c.opt.MaxRetries; attempt++ {
 		if attempt > 0 {
-			if err := c.sleep(ctx, "Pipeline", attempt); err != nil {
+			if err := c.sleep(ctx, "Pipeline", attempt, lastErr); err != nil {
 				return err
 			}
 		}

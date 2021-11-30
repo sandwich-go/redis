@@ -81,7 +81,7 @@ type ClusterOptions struct {
 
 	TLSConfig *tls.Config
 
-	OnSleep func(cmd string, attempt int, dur time.Duration)
+	OnSleep func(cmd string, attempt int, dur time.Duration, err error)
 }
 
 func (opt *ClusterOptions) init() {
@@ -780,7 +780,7 @@ func (c *ClusterClient) process(ctx context.Context, cmd Cmder) error {
 	var lastErr error
 	for attempt := 0; attempt <= c.opt.MaxRedirects; attempt++ {
 		if attempt > 0 {
-			if err := c.sleep(ctx, cmd.Name(), attempt); err != nil {
+			if err := c.sleep(ctx, cmd.Name(), attempt, lastErr); err != nil {
 				return err
 			}
 		}
@@ -1104,7 +1104,7 @@ func (c *ClusterClient) _processPipeline(ctx context.Context, cmds []Cmder) erro
 
 	for attempt := 0; attempt <= c.opt.MaxRedirects; attempt++ {
 		if attempt > 0 {
-			if err := c.sleep(ctx, "Pipeline", attempt); err != nil {
+			if err := c.sleep(ctx, "Pipeline", attempt, cmdsFirstErr(cmds)); err != nil {
 				setCmdsErr(cmds, err)
 				return err
 			}
@@ -1297,7 +1297,7 @@ func (c *ClusterClient) _processTxPipeline(ctx context.Context, cmds []Cmder) er
 		cmdsMap := map[*clusterNode][]Cmder{node: cmds}
 		for attempt := 0; attempt <= c.opt.MaxRedirects; attempt++ {
 			if attempt > 0 {
-				if err := c.sleep(ctx, "TxPipeline", attempt); err != nil {
+				if err := c.sleep(ctx, "TxPipeline", attempt, cmdsFirstErr(cmds)); err != nil {
 					setCmdsErr(cmds, err)
 					return err
 				}
@@ -1468,7 +1468,7 @@ func (c *ClusterClient) Watch(ctx context.Context, fn func(*Tx) error, keys ...s
 
 	for attempt := 0; attempt <= c.opt.MaxRedirects; attempt++ {
 		if attempt > 0 {
-			if err := c.sleep(ctx, "Watch", attempt); err != nil {
+			if err := c.sleep(ctx, "Watch", attempt, err); err != nil {
 				return err
 			}
 		}
@@ -1569,10 +1569,10 @@ func (c *ClusterClient) PSubscribe(ctx context.Context, channels ...string) *Pub
 	return pubsub
 }
 
-func (c *ClusterClient) sleep(ctx context.Context, name string, attempt int) error {
+func (c *ClusterClient) sleep(ctx context.Context, name string, attempt int, err error) error {
 	d := c.retryBackoff(attempt)
 	if c.opt.OnSleep != nil {
-		c.opt.OnSleep(name, attempt, d)
+		c.opt.OnSleep(name, attempt, d, err)
 	}
 	return internal.Sleep(ctx, d)
 }

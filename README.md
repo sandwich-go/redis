@@ -61,7 +61,7 @@ go mod init github.com/my/repo
 And then install go-redis/v8 (note _v8_ in the import; omitting it is a popular mistake):
 
 ```shell
-go get github.com/go-redis/redis/v8
+go get github.com/sandwich-go/redis/v8
 ```
 
 ## Quickstart
@@ -69,7 +69,7 @@ go get github.com/go-redis/redis/v8
 ```go
 import (
     "context"
-    "github.com/go-redis/redis/v8"
+    "github.com/sandwich-go/redis/v8"
 )
 
 var ctx = context.Background()

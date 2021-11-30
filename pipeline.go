@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/go-redis/redis/v8/internal/pool"
+	"github.com/sandwich-go/redis/v8/internal/pool"
 )
 
 type pipelineExecer func(context.Context, []Cmder) error

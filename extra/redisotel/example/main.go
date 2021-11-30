@@ -2,9 +2,8 @@ package main
 
 import (
 	"context"
-
-	"github.com/go-redis/redis/extra/redisotel/v8"
-	"github.com/go-redis/redis/v8"
+	"github.com/sandwich-go/redis/extra/redisotel/v8"
+	"github.com/sandwich-go/redis/v8"
 	"go.opentelemetry.io/otel"
 	stdoutexporter "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"

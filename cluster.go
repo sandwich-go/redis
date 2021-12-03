@@ -81,7 +81,10 @@ type ClusterOptions struct {
 
 	TLSConfig *tls.Config
 
+	// hook
 	OnSleep func(cmd string, attempt int, dur time.Duration, err error)
+	Before  func() context.Context
+	After   func(ctx context.Context, name string)
 }
 
 func (opt *ClusterOptions) init() {
@@ -140,6 +143,8 @@ func (opt *ClusterOptions) clientOptions() *Options {
 		Dialer:    opt.Dialer,
 		OnConnect: opt.OnConnect,
 		OnSleep:   opt.OnSleep,
+		Before:    opt.Before,
+		After:     opt.After,
 
 		Username: opt.Username,
 		Password: opt.Password,

@@ -68,6 +68,11 @@ type FailoverOptions struct {
 	IdleCheckFrequency time.Duration
 
 	TLSConfig *tls.Config
+
+	// hook
+	OnSleep func(cmd string, attempt int, dur time.Duration, err error)
+	Before  func() context.Context
+	After   func(ctx context.Context, name string)
 }
 
 func (opt *FailoverOptions) clientOptions() *Options {
@@ -98,6 +103,10 @@ func (opt *FailoverOptions) clientOptions() *Options {
 		MaxConnAge:         opt.MaxConnAge,
 
 		TLSConfig: opt.TLSConfig,
+
+		OnSleep: opt.OnSleep,
+		Before:  opt.Before,
+		After:   opt.After,
 	}
 }
 
@@ -128,6 +137,9 @@ func (opt *FailoverOptions) sentinelOptions(addr string) *Options {
 		MaxConnAge:         opt.MaxConnAge,
 
 		TLSConfig: opt.TLSConfig,
+		OnSleep:   opt.OnSleep,
+		Before:    opt.Before,
+		After:     opt.After,
 	}
 }
 
@@ -160,6 +172,9 @@ func (opt *FailoverOptions) clusterOptions() *ClusterOptions {
 		MaxConnAge:         opt.MaxConnAge,
 
 		TLSConfig: opt.TLSConfig,
+		OnSleep:   opt.OnSleep,
+		Before:    opt.Before,
+		After:     opt.After,
 	}
 }
 

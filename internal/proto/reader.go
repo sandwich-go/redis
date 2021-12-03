@@ -2,6 +2,7 @@ package proto
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 
@@ -34,6 +35,9 @@ type MultiBulkParse func(*Reader, int64) (interface{}, error)
 type Reader struct {
 	rd   *bufio.Reader
 	_buf []byte
+
+	Before func() context.Context
+	After  func(ctx context.Context, name string)
 }
 
 func NewReader(rd io.Reader) *Reader {
@@ -56,7 +60,19 @@ func (r *Reader) Reset(rd io.Reader) {
 }
 
 func (r *Reader) ReadLine() ([]byte, error) {
+	var ctx context.Context
+	if r.Before != nil {
+		ctx = r.Before()
+	}
 	line, err := r.readLine()
+	if r.After != nil {
+		r.After(ctx, "Reader.readLine")
+	}
+	return line, err
+}
+
+func (r *Reader) readLine() ([]byte, error) {
+	line, err := r._readLine()
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +85,7 @@ func (r *Reader) ReadLine() ([]byte, error) {
 // readLine that returns an error if:
 //   - there is a pending read error;
 //   - or line does not end with \r\n.
-func (r *Reader) readLine() ([]byte, error) {
+func (r *Reader) _readLine() ([]byte, error) {
 	b, err := r.rd.ReadSlice('\n')
 	if err != nil {
 		if err != bufio.ErrBufferFull {
@@ -156,7 +172,7 @@ func (r *Reader) ReadString() (string, error) {
 	}
 }
 
-func (r *Reader) readStringReply(line []byte) (string, error) {
+func (r *Reader) _readStringReply(line []byte) (string, error) {
 	if isNilReply(line) {
 		return "", Nil
 	}
@@ -173,6 +189,18 @@ func (r *Reader) readStringReply(line []byte) (string, error) {
 	}
 
 	return util.BytesToString(b[:replyLen]), nil
+}
+
+func (r *Reader) readStringReply(line []byte) (string, error) {
+	var ctx context.Context
+	if r.Before != nil {
+		ctx = r.Before()
+	}
+	s, err := r._readStringReply(line)
+	if r.After != nil {
+		r.After(ctx, "Reader.readStringReply")
+	}
+	return s, err
 }
 
 func (r *Reader) ReadArrayReply(m MultiBulkParse) (interface{}, error) {
@@ -286,7 +314,7 @@ func (r *Reader) readTmpBytesReply() ([]byte, error) {
 	}
 }
 
-func (r *Reader) _readTmpBytesReply(line []byte) ([]byte, error) {
+func (r *Reader) __readTmpBytesReply(line []byte) ([]byte, error) {
 	if isNilReply(line) {
 		return nil, Nil
 	}
@@ -303,6 +331,18 @@ func (r *Reader) _readTmpBytesReply(line []byte) ([]byte, error) {
 	}
 
 	return buf[:replyLen], nil
+}
+
+func (r *Reader) _readTmpBytesReply(line []byte) ([]byte, error) {
+	var ctx context.Context
+	if r.Before != nil {
+		ctx = r.Before()
+	}
+	buf, err := r.__readTmpBytesReply(line)
+	if r.After != nil {
+		r.After(ctx, "Reader._readTmpBytesReply")
+	}
+	return buf, err
 }
 
 func (r *Reader) buf(n int) []byte {

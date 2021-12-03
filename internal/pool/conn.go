@@ -13,6 +13,8 @@ import (
 var noDeadline = time.Time{}
 
 type Conn struct {
+	opt *Options
+
 	usedAt  int64 // atomic
 	netConn net.Conn
 
@@ -44,6 +46,14 @@ func (cn *Conn) UsedAt() time.Time {
 
 func (cn *Conn) SetUsedAt(tm time.Time) {
 	atomic.StoreInt64(&cn.usedAt, tm.Unix())
+}
+
+func (cn *Conn) SetOpt(opt *Options) {
+	cn.opt = opt
+	cn.rd.Before = opt.Before
+	cn.rd.After = opt.After
+	cn.wr.Before = opt.Before
+	cn.wr.After = opt.After
 }
 
 func (cn *Conn) SetNetConn(netConn net.Conn) {

@@ -112,7 +112,10 @@ type Options struct {
 	// Limiter interface used to implemented circuit breaker or rate limiter.
 	Limiter Limiter
 
+	// hook
 	OnSleep func(cmd string, attempt int, dur time.Duration, err error)
+	Before  func() context.Context
+	After   func(ctx context.Context, name string)
 }
 
 func (opt *Options) init() {
@@ -297,6 +300,8 @@ func newConnPool(opt *Options) *pool.ConnPool {
 		Dialer: func(ctx context.Context) (net.Conn, error) {
 			return opt.Dialer(ctx, opt.Network, opt.Addr)
 		},
+		Before:             opt.Before,
+		After:              opt.After,
 		PoolFIFO:           opt.PoolFIFO,
 		PoolSize:           opt.PoolSize,
 		MinIdleConns:       opt.MinIdleConns,

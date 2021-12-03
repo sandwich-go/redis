@@ -90,7 +90,11 @@ type RingOptions struct {
 
 	TLSConfig *tls.Config
 	Limiter   Limiter
-	OnSleep   func(cmd string, attempt int, dur time.Duration, err error)
+
+	// hook
+	OnSleep func(cmd string, attempt int, dur time.Duration, err error)
+	Before  func() context.Context
+	After   func(ctx context.Context, name string)
 }
 
 func (opt *RingOptions) init() {
@@ -131,6 +135,9 @@ func (opt *RingOptions) clientOptions() *Options {
 	return &Options{
 		Dialer:    opt.Dialer,
 		OnConnect: opt.OnConnect,
+		OnSleep:   opt.OnSleep,
+		Before:    opt.Before,
+		After:     opt.After,
 
 		Username: opt.Username,
 		Password: opt.Password,

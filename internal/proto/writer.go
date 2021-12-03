@@ -1,6 +1,7 @@
 package proto
 
 import (
+	"context"
 	"encoding"
 	"fmt"
 	"io"
@@ -22,6 +23,9 @@ type Writer struct {
 
 	lenBuf []byte
 	numBuf []byte
+
+	Before func() context.Context
+	After  func(ctx context.Context, name string)
 }
 
 func NewWriter(wr writer) *Writer {
@@ -34,6 +38,18 @@ func NewWriter(wr writer) *Writer {
 }
 
 func (w *Writer) WriteArgs(args []interface{}) error {
+	var ctx context.Context
+	if w.Before != nil {
+		ctx = w.Before()
+	}
+	err := w.writeArgs(args)
+	if w.After != nil {
+		w.After(ctx, "Writer.WriteArgs")
+	}
+	return err
+}
+
+func (w *Writer) writeArgs(args []interface{}) error {
 	if err := w.WriteByte(ArrayReply); err != nil {
 		return err
 	}

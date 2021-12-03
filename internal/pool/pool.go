@@ -56,6 +56,8 @@ type Pooler interface {
 type Options struct {
 	Dialer  func(context.Context) (net.Conn, error)
 	OnClose func(*Conn) error
+	Before  func() context.Context
+	After   func(ctx context.Context, name string)
 
 	PoolFIFO           bool
 	PoolSize           int
@@ -190,6 +192,7 @@ func (p *ConnPool) dialConn(ctx context.Context, pooled bool) (*Conn, error) {
 	}
 
 	cn := NewConn(netConn)
+	cn.SetOpt(p.opt)
 	cn.pooled = pooled
 	return cn, nil
 }

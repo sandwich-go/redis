@@ -33,11 +33,11 @@ func (RedisError) RedisError() {}
 type MultiBulkParse func(*Reader, int64) (interface{}, error)
 
 type Reader struct {
-	rd   *bufio.Reader
-	_buf []byte
-
-	Before func() context.Context
-	After  func(ctx context.Context, name string)
+	rd       *bufio.Reader
+	_buf     []byte
+	SkipHook bool
+	Before   func() context.Context
+	After    func(ctx context.Context, name string)
 }
 
 func NewReader(rd io.Reader) *Reader {
@@ -61,11 +61,11 @@ func (r *Reader) Reset(rd io.Reader) {
 
 func (r *Reader) ReadLine() ([]byte, error) {
 	var ctx context.Context
-	if r.Before != nil {
+	if !r.SkipHook && r.Before != nil {
 		ctx = r.Before()
 	}
 	line, err := r.readLine()
-	if r.After != nil {
+	if !r.SkipHook && r.After != nil {
 		r.After(ctx, "Reader.readLine")
 	}
 	return line, err
@@ -193,11 +193,11 @@ func (r *Reader) _readStringReply(line []byte) (string, error) {
 
 func (r *Reader) readStringReply(line []byte) (string, error) {
 	var ctx context.Context
-	if r.Before != nil {
+	if !r.SkipHook && r.Before != nil {
 		ctx = r.Before()
 	}
 	s, err := r._readStringReply(line)
-	if r.After != nil {
+	if !r.SkipHook && r.After != nil {
 		r.After(ctx, "Reader.readStringReply")
 	}
 	return s, err
@@ -335,11 +335,11 @@ func (r *Reader) __readTmpBytesReply(line []byte) ([]byte, error) {
 
 func (r *Reader) _readTmpBytesReply(line []byte) ([]byte, error) {
 	var ctx context.Context
-	if r.Before != nil {
+	if !r.SkipHook && r.Before != nil {
 		ctx = r.Before()
 	}
 	buf, err := r.__readTmpBytesReply(line)
-	if r.After != nil {
+	if !r.SkipHook && r.After != nil {
 		r.After(ctx, "Reader._readTmpBytesReply")
 	}
 	return buf, err

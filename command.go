@@ -557,6 +557,7 @@ func (cmd *DurationCmd) String() string {
 }
 
 func (cmd *DurationCmd) readReply(rd *proto.Reader) error {
+	rd.SkipHook = true
 	n, err := rd.ReadIntReply()
 	if err != nil {
 		return err
@@ -604,6 +605,7 @@ func (cmd *TimeCmd) String() string {
 }
 
 func (cmd *TimeCmd) readReply(rd *proto.Reader) error {
+	rd.SkipHook = true
 	_, err := rd.ReadArrayReply(func(rd *proto.Reader, n int64) (interface{}, error) {
 		if n != 2 {
 			return nil, fmt.Errorf("got %d elements, expected 2", n)
@@ -1171,6 +1173,7 @@ func (cmd *XMessageSliceCmd) String() string {
 }
 
 func (cmd *XMessageSliceCmd) readReply(rd *proto.Reader) error {
+	rd.SkipHook = true
 	var err error
 	cmd.val, err = readXMessageSlice(rd)
 	return err
@@ -1280,6 +1283,7 @@ func (cmd *XStreamSliceCmd) String() string {
 }
 
 func (cmd *XStreamSliceCmd) readReply(rd *proto.Reader) error {
+	rd.SkipHook = true
 	_, err := rd.ReadArrayReply(func(rd *proto.Reader, n int64) (interface{}, error) {
 		cmd.val = make([]XStream, n)
 		for i := 0; i < len(cmd.val); i++ {
@@ -1352,6 +1356,7 @@ func (cmd *XPendingCmd) String() string {
 }
 
 func (cmd *XPendingCmd) readReply(rd *proto.Reader) error {
+	rd.SkipHook = true
 	_, err := rd.ReadArrayReply(func(rd *proto.Reader, n int64) (interface{}, error) {
 		if n != 4 {
 			return nil, fmt.Errorf("got %d, wanted 4", n)
@@ -1454,6 +1459,7 @@ func (cmd *XPendingExtCmd) String() string {
 }
 
 func (cmd *XPendingExtCmd) readReply(rd *proto.Reader) error {
+	rd.SkipHook = true
 	_, err := rd.ReadArrayReply(func(rd *proto.Reader, n int64) (interface{}, error) {
 		cmd.val = make([]XPendingExt, 0, n)
 		for i := int64(0); i < n; i++ {
@@ -1532,6 +1538,7 @@ func (cmd *XAutoClaimCmd) String() string {
 }
 
 func (cmd *XAutoClaimCmd) readReply(rd *proto.Reader) error {
+	rd.SkipHook = true
 	_, err := rd.ReadArrayReply(func(rd *proto.Reader, n int64) (interface{}, error) {
 		if n != 2 {
 			return nil, fmt.Errorf("got %d, wanted 2", n)
@@ -1586,6 +1593,7 @@ func (cmd *XAutoClaimJustIDCmd) String() string {
 }
 
 func (cmd *XAutoClaimJustIDCmd) readReply(rd *proto.Reader) error {
+	rd.SkipHook = true
 	_, err := rd.ReadArrayReply(func(rd *proto.Reader, n int64) (interface{}, error) {
 		if n != 2 {
 			return nil, fmt.Errorf("got %d, wanted 2", n)
@@ -1652,6 +1660,7 @@ func (cmd *XInfoConsumersCmd) String() string {
 }
 
 func (cmd *XInfoConsumersCmd) readReply(rd *proto.Reader) error {
+	rd.SkipHook = true
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -1750,6 +1759,7 @@ func (cmd *XInfoGroupsCmd) String() string {
 }
 
 func (cmd *XInfoGroupsCmd) readReply(rd *proto.Reader) error {
+	rd.SkipHook = true
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err
@@ -1853,6 +1863,7 @@ func (cmd *XInfoStreamCmd) String() string {
 }
 
 func (cmd *XInfoStreamCmd) readReply(rd *proto.Reader) error {
+	rd.SkipHook = true
 	v, err := rd.ReadReply(xStreamInfoParser)
 	if err != nil {
 		return err
@@ -1972,6 +1983,7 @@ func (cmd *XInfoStreamFullCmd) String() string {
 }
 
 func (cmd *XInfoStreamFullCmd) readReply(rd *proto.Reader) error {
+	rd.SkipHook = true
 	n, err := rd.ReadArrayLen()
 	if err != nil {
 		return err

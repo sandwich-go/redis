@@ -77,6 +77,7 @@ func (cn *Conn) WithReader(ctx context.Context, timeout time.Duration, fn func(r
 	if err := cn.netConn.SetReadDeadline(cn.deadline(ctx, timeout)); err != nil {
 		return err
 	}
+	cn.rd.SkipHook = false
 	return fn(cn.rd)
 }
 
